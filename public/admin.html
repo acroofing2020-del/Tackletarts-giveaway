@@ -1,104 +1,62 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin - TackleTarts</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - TackleTarts</title>
+  <link rel="stylesheet" href="styles.css">
   <style>
-    body { font-family: Arial, sans-serif; background:#f7fbff; margin:0; color:#143a6e; }
-    header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:#0a4ea1; color:#fff; }
-    .wrap { max-width:900px; margin: 24px auto; padding: 0 16px; }
-    .card { background:#fff; border:1px solid #e2e8f6; border-radius:14px; padding:18px; margin-bottom:16px; }
-    input, button { padding:10px; border-radius:10px; border:1px solid #cfd9ea; }
-    button { background:#0a4ea1; color:#fff; border:none; cursor:pointer; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { padding:10px; border-bottom:1px solid #eef2fb; text-align:left; }
+    body { font-family: Arial, sans-serif; background:#f0f8ff; margin:0; padding:20px; }
+    h1 { color:#004080; }
+    form { margin:20px 0; padding:20px; background:white; border-radius:8px; max-width:400px; box-shadow:0 0 6px rgba(0,0,0,0.2); }
+    input { display:block; margin:10px 0; padding:10px; width:100%; }
+    button { background:#004080; color:white; padding:10px 20px; border:none; cursor:pointer; border-radius:5px; }
+    button:hover { background:#0066cc; }
+    #message { margin-top:15px; font-weight:bold; }
   </style>
 </head>
 <body>
-  <header>
-    <div>🎣 Admin — TackleTarts</div>
-    <div>
-      <button onclick="logout()">Log out</button>
-    </div>
-  </header>
+  <h1>Admin Dashboard</h1>
 
-  <div class="wrap">
-    <div class="card">
-      <h2>Create Competition</h2>
-      <p>
-        <input id="title" placeholder="Title" style="width:100%;"><br><br>
-        <input id="max" type="number" placeholder="Max tickets (default 200000)" style="width:100%;"><br><br>
-        <input id="price" type="number" step="0.01" placeholder="Price (£) e.g. 0.25" style="width:100%;">
-      </p>
-      <button onclick="createCompetition()">Create</button>
-    </div>
+  <h2>Create a Competition</h2>
+  <form id="competitionForm">
+    <label>Title:</label>
+    <input type="text" id="title" required>
+    <label>Max Tickets:</label>
+    <input type="number" id="max_tickets" value="200000" required>
+    <label>Price (pence):</label>
+    <input type="number" id="price" value="25" required>
+    <button type="submit">Create Competition</button>
+  </form>
 
-    <div class="card">
-      <h2>Open Competitions</h2>
-      <table id="comps">
-        <thead><tr><th>ID</th><th>Title</th><th>Max</th><th>Price</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+  <div id="message"></div>
 
   <script>
-    async function ensureAdmin() {
-      const me = await fetch("/api/me").then(r=>r.json());
-      if (!me.user) location.href = "/login.html";
-      if (me.user.role !== "admin") {
-        alert("Admins only"); location.href = "/dashboard.html";
+    document.getElementById("competitionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById("title").value;
+      const max_tickets = document.getElementById("max_tickets").value;
+      const price = document.getElementById("price").value;
+
+      try {
+        const res = await fetch("/api/admin/competition", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, max_tickets, price })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById("message").innerText = "✅ Competition created successfully!";
+        } else {
+          document.getElementById("message").innerText = "❌ Error: " + (data.error || "Unknown error");
+        }
+      } catch (err) {
+        document.getElementById("message").innerText = "❌ Failed to connect to server.";
       }
-    }
-
-    async function loadComps() {
-      const rows = await fetch("/api/competitions").then(r=>r.json());
-      const tbody = document.querySelector("#comps tbody");
-      tbody.innerHTML = rows.map(c => `
-        <tr>
-          <td>${c.id}</td>
-          <td>${c.title}</td>
-          <td>${c.max_tickets}</td>
-          <td>£${c.price.toFixed(2)}</td>
-          <td>${c.status}</td>
-          <td><button onclick="closeComp(${c.id})">Close</button></td>
-        </tr>
-      `).join("");
-    }
-
-    async function createCompetition() {
-      const title = document.getElementById("title").value.trim();
-      const max = document.getElementById("max").value;
-      const price = document.getElementById("price").value || "0.25";
-
-      const res = await fetch("/api/admin/competitions", {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ title, max_tickets: max, price })
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.error || "Failed");
-      alert("Competition created (instant wins seeded).");
-      loadComps();
-    }
-
-    async function closeComp(id) {
-      const res = await fetch(`/api/admin/competitions/${id}/close`, { method:"POST" });
-      if (!res.ok) { const d = await res.json(); return alert(d.error||"Close failed"); }
-      alert("Competition closed.");
-      loadComps();
-    }
-
-    async function logout() {
-      await fetch("/api/logout", { method:"POST" });
-      location.href = "/";
-    }
-
-    (async () => {
-      await ensureAdmin();
-      await loadComps();
-    })();
+    });
   </script>
 </body>
 </html>
