@@ -1,137 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TackleTart Giveaways</title>
-<style>
-  :root{
-    --blue:#0a4ea3; --blue2:#0f66d0; --light:#eef6ff; --card:#ffffff;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:Arial, Helvetica, sans-serif; color:#fff;
-    min-height:100vh; background: linear-gradient(135deg, var(--blue), var(--blue2));
-    overflow-x:hidden;
-  }
-  header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:18px 28px; background:rgba(0,0,0,0.15); backdrop-filter: blur(3px);
-  }
-  header .brand{font-weight:800; letter-spacing:.5px}
-  header nav a{
-    color:#fff; text-decoration:none; margin-left:18px; font-weight:600;
-    border:1px solid rgba(255,255,255,.3); padding:8px 12px; border-radius:10px;
-  }
-  .hero{
-    position:relative; padding:70px 28px 120px; text-align:center;
-  }
-  .hero h1{font-size:46px; margin:0 0 10px}
-  .hero p{font-size:18px; opacity:.95; margin:0 0 22px}
-  .cta a{
-    display:inline-block; background:#fff; color:var(--blue);
-    padding:12px 18px; border-radius:12px; font-weight:800; text-decoration:none;
-    margin:0 8px;
-  }
-  /* SVG scene container */
-  .scene{
-    position:absolute; inset:0; pointer-events:none; opacity:.22;
-  }
-  .card{
-    background:var(--card); color:#123;
-    max-width:960px; margin:40px auto; border-radius:18px; padding:22px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.25);
-  }
-  .card h3{margin-top:0}
-  footer{padding:28px; text-align:center; opacity:.8}
-  /* Rods on sides */
-  .rod-left,.rod-right{
-    position:fixed; top:10%; width:160px; opacity:.9;
-    filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
-  }
-  .rod-left{left:0}
-  .rod-right{right:0; transform:scaleX(-1)}
-  @media (max-width:900px){ .rod-left,.rod-right{display:none} }
-</style>
+  <meta charset="UTF-8" />
+  <title>TackleTarts Giveaways</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --blue:#0a4aa3; --btn:#0f66ff; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: Arial, sans-serif; color: #fff;
+      min-height: 100vh; display: grid; place-items: center;
+      background: linear-gradient(180deg, rgba(10,74,163,0.9), rgba(10,74,163,0.75)), url("/images/carp-bg.jpg") center/cover no-repeat fixed;
+    }
+    .wrap { width: 100%; max-width: 520px; padding: 24px; text-align: center; }
+    h1 { margin: 0 0 8px; letter-spacing: 0.5px; }
+    p { opacity: 0.9; margin: 0 0 24px; }
+    .card {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px; padding: 24px; backdrop-filter: blur(6px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .links { display: grid; gap: 12px; margin-top: 16px; }
+    .btn {
+      display: block; width: 100%; padding: 14px 16px; border-radius: 12px;
+      background: #fff; color: #0a4aa3; text-decoration: none; font-weight: 700;
+      border: 2px solid transparent;
+    }
+    .btn:hover { border-color: #fff; background: transparent; color: #fff; }
+    .small { font-size: 12px; opacity: 0.8; margin-top: 18px; }
+    .brand {
+      display:flex; gap:12px; align-items:center; justify-content:center; margin-bottom: 12px;
+    }
+    .rod {
+      width: 24px; height: 24px; border:2px solid #fff; border-radius: 2px; transform: rotate(20deg);
+      position: relative;
+    }
+    .rod::after {
+      content:""; position:absolute; right:-10px; top:6px; width:14px; height:14px; border:2px solid #fff; border-radius:50%;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <div class="brand">🎣 <strong>TackleTart Giveaways</strong></div>
-    <nav>
-      <a href="/competitions.html">Competitions</a>
-      <a href="/signup.html">Sign Up</a>
-      <a href="/login.html">Login</a>
-      <a href="/dashboard.html">My Dashboard</a>
-    </nav>
-  </header>
-
-  <!-- Side rods (SVG) -->
-  <svg class="rod-left" viewBox="0 0 120 400">
-    <line x1="10" y1="380" x2="110" y2="20" stroke="#222" stroke-width="6" />
-    <line x1="25" y1="360" x2="55" y2="340" stroke="#222" stroke-width="4" />
-    <line x1="40" y1="330" x2="70" y2="310" stroke="#222" stroke-width="4" />
-    <!-- hook + carp -->
-    <path d="M100,40 q10,10 0,20 q-10,10 0,20" fill="none" stroke="#111" stroke-width="2"/>
-    <circle cx="102" cy="82" r="3" fill="#111"/>
-    <!-- carp silhouette on hook -->
-    <path d="M90,110 q25,-12 30,0 q5,12 -12,18 q-8,4 -22,0 q-14,-6 -8,-12 q3,-3 12,-6z" fill="#e5b35a"/>
-  </svg>
-  <svg class="rod-right" viewBox="0 0 120 400">
-    <line x1="10" y1="380" x2="110" y2="20" stroke="#222" stroke-width="6" />
-    <line x1="25" y1="360" x2="55" y2="340" stroke="#222" stroke-width="4" />
-    <line x1="40" y1="330" x2="70" y2="310" stroke="#222" stroke-width="4" />
-    <!-- hook + bream -->
-    <path d="M100,40 q10,10 0,20 q-10,10 0,20" fill="none" stroke="#111" stroke-width="2"/>
-    <circle cx="102" cy="82" r="3" fill="#111"/>
-    <!-- bream silhouette on hook -->
-    <path d="M88,112 q18,-8 22,0 q4,8 -8,12 q-6,3 -16,0 q-10,-4 -6,-8 q2,-2 8,-4z" fill="#9ad1ff"/>
-  </svg>
-
-  <section class="hero">
-    <div class="scene">
-      <!-- Big carp and many little bream as background -->
-      <svg width="100%" height="100%">
-        <!-- big carp center -->
-        <g transform="translate(50%,50%)">
-          <ellipse cx="0" cy="0" rx="320" ry="140" fill="#ffd070"/>
-          <polygon points="-300,0 -340,-20 -340,20" fill="#ffb94d"/>
-          <circle cx="-230" cy="-20" r="12" fill="#222"/>
-        </g>
-        <!-- scatter little bream -->
-        <g fill="#bfe3ff">
-          <ellipse cx="15%" cy="20%" rx="40" ry="18"/>
-          <ellipse cx="25%" cy="35%" rx="36" ry="16"/>
-          <ellipse cx="10%" cy="70%" rx="34" ry="14"/>
-          <ellipse cx="78%" cy="24%" rx="38" ry="16"/>
-          <ellipse cx="70%" cy="60%" rx="34" ry="14"/>
-          <ellipse cx="85%" cy="75%" rx="36" ry="16"/>
-          <ellipse cx="40%" cy="18%" rx="32" ry="14"/>
-          <ellipse cx="60%" cy="82%" rx="34" ry="14"/>
-          <ellipse cx="48%" cy="28%" rx="34" ry="14"/>
-        </g>
-      </svg>
+  <div class="wrap">
+    <div class="brand">
+      <div class="rod"></div>
+      <h1>TackleTarts Giveaways</h1>
+      <div class="rod" style="transform:rotate(-20deg)"></div>
     </div>
+    <p>Daily draws • Random ticket numbers • Instant wins</p>
 
-    <h1>TackleTart Giveaways</h1>
-    <p>Daily comps • 200,000 max tickets • £0.25 per ticket • Randomised ticket numbers • Instant Win credits</p>
-    <div class="cta">
-      <a href="/signup.html">Create Account</a>
-      <a href="/competitions.html">View Competitions</a>
+    <div class="card">
+      <div class="links">
+        <a class="btn" href="/login.html">Login</a>
+        <a class="btn" href="/signup.html">Create an Account</a>
+        <a class="btn" href="/competitions.html">View Competitions</a>
+        <a class="btn" href="https://instagram.com/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <div class="small">© TackleTarts • Keep it fun, play responsibly</div>
     </div>
-  </section>
-
-  <div class="card">
-    <h3>How it works</h3>
-    <ol>
-      <li>Create your account (email + address)</li>
-      <li>Pick a competition and choose tickets with the slider</li>
-      <li>Checkout securely with Stripe</li>
-      <li>Tickets are randomly allocated after payment</li>
-      <li>Instant Win? You’ll see £0.20 site credit in your dashboard 🎉</li>
-    </ol>
   </div>
-
-  <footer>© <span id="y"></span> TackleTart Giveaways</footer>
-  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
 </body>
 </html>
