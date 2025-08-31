@@ -1,64 +1,84 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Competitions • TackleTarts</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Competitions - TackleTarts</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#0a4aa3; color:#fff; min-height:100vh; }
-    header { padding:16px; display:flex; justify-content:space-between; align-items:center; background:#0b3c84; }
-    main { max-width:900px; margin: 24px auto; padding: 0 16px; }
-    .card { background:#0b3c84; border-radius:12px; padding:16px; margin-bottom:16px; }
-    input[type=number] { width:120px; padding:10px; border-radius:8px; border:none; }
-    button { padding:12px 16px; border:none; border-radius:10px; background:#fff; color:#0a4aa3; font-weight:700; }
-    a { color:#fff; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef6ff;
+      margin: 0;
+      padding: 20px;
+    }
+    .comp-card {
+      background: white;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 500px;
+      text-align: center;
+    }
+    input[type=number] {
+      width: 100px;
+      padding: 5px;
+      margin: 10px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      background: #004080;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #0066cc; }
   </style>
 </head>
 <body>
-  <header>
-    <strong>🎣 TackleTarts</strong>
-    <nav>
-      <a href="/">Home</a>
-      <a href="/login.html">Login</a>
-      <a href="/signup.html">Sign Up</a>
-      <a href="/dashboard.html">My Dashboard</a>
-    </nav>
-  </header>
-
-  <main>
-    <h2>Today’s Competition</h2>
-    <div class="card">
-      <p>Buy tickets (25p each). You need to be logged in to checkout.</p>
-      <input id="quantity" type="number" min="1" max="200000" value="1" />
-      <button id="checkout">Checkout with Stripe</button>
-    </div>
-  </main>
+  <h1>Available Competitions</h1>
+  <div id="competitions"></div>
 
   <script src="https://js.stripe.com/v3/"></script>
   <script>
-    let stripe;
-    (async () => {
-      const cfg = await fetch("/api/config").then(r=>r.json());
-      stripe = Stripe(cfg.publishableKey);
-    })();
+    const STRIPE_PUBLIC_KEY = "{{STRIPE_PUBLISHABLE_KEY}}"; // will be replaced by server
+    const stripe = Stripe(STRIPE_PUBLIC_KEY);
 
-    document.getElementById("checkout").addEventListener("click", async () => {
-      const quantity = parseInt(document.getElementById("quantity").value, 10) || 1;
+    async function loadCompetitions() {
+      const res = await fetch("/api/competitions");
+      const comps = await res.json();
+      const container = document.getElementById("competitions");
+      container.innerHTML = "";
 
-      // Optional: check login
-      const me = await fetch("/api/me").then(r=>r.json());
-      if (!me.user) { alert("Please login first."); window.location.href = "/login.html"; return; }
+      comps.forEach(comp => {
+        const div = document.createElement("div");
+        div.className = "comp-card";
+        div.innerHTML = `
+          <h2>${comp.title}</h2>
+          <p>£${comp.price} per ticket</p>
+          <input type="number" id="qty-${comp.id}" min="1" max="${comp.max_tickets}" value="1">
+          <button onclick="buyTickets(${comp.id}, '${comp.title}')">Buy Tickets</button>
+        `;
+        container.appendChild(div);
+      });
+    }
 
-      const res = await fetch("/api/create-checkout-session", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ quantity })
+    async function buyTickets(compId, title) {
+      const qty = document.getElementById("qty-" + compId).value;
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ competition_id: compId, quantity: qty })
       });
       const data = await res.json();
-      if (!res.ok) return alert(data.error || "Could not start checkout");
-      await stripe.redirectToCheckout({ sessionId: data.id });
-    });
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("❌ Error: " + (data.error || "Checkout failed"));
+      }
+    }
+
+    loadCompetitions();
   </script>
 </body>
 </html>
