@@ -2,79 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Your Dashboard • TackleTarts</title>
+  <title>User Dashboard - TackleTarts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#0a4aa3; color:#fff; min-height:100vh; }
-    header { padding:16px; display:flex; justify-content:space-between; align-items:center; background:#0b3c84; }
-    main { max-width:900px; margin: 24px auto; padding: 0 16px; }
-    .card { background:#0b3c84; border-radius:12px; padding:16px; margin-bottom:16px; }
-    input[type=number] { width:120px; padding:10px; border-radius:8px; border:none; }
-    button { padding:12px 16px; border:none; border-radius:10px; background:#fff; color:#0a4aa3; font-weight:700; }
-    a { color:#fff; }
+    body { font-family: Arial, sans-serif; background:#f5f8ff; margin:0; color:#143a6e; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:#0a4ea1; color:#fff; }
+    .wrap { max-width:1000px; margin: 24px auto; padding: 0 16px; }
+    .card { background:#fff; border:1px solid #e2e8f6; border-radius:14px; padding:18px; margin-bottom:16px; }
+    button { background:#0a4ea1; color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; }
+    button:hover { opacity:.95; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding:10px; border-bottom:1px solid #eef2fb; text-align:left; }
+    select, input[type=range] { width:100%; }
+    .qty { display:flex; align-items:center; gap:12px; }
   </style>
 </head>
 <body>
   <header>
-    <strong>🎣 TackleTarts</strong>
-    <nav>
-      <a href="#" id="logout">Logout</a>
-    </nav>
+    <div>🎣 TackleTarts — Your Dashboard</div>
+    <button onclick="logout()">Log out</button>
   </header>
 
-  <main>
-    <h2>Your Dashboard</h2>
+  <div class="wrap">
     <div class="card">
-      <h3>Quick links</h3>
-      <ul>
-        <li>Instant wins</li>
-        <li>Account info</li>
-        <li>Email info</li>
-        <li>Competition history</li>
-        <li>Your ticket numbers</li>
-      </ul>
+      <h2>Buy Tickets</h2>
+      <label>Competition</label>
+      <select id="competition"></select>
+
+      <div class="qty" style="margin-top:12px;">
+        <label for="quantity" style="min-width:120px;">Quantity:</label>
+        <input type="range" id="quantity" min="1" max="200" value="1" oninput="qtyOut.textContent = quantity.value">
+        <strong id="qtyOut">1</strong>
+      </div>
+
+      <p id="priceInfo" style="margin:8px 0;color:#1959bf"></p>
+      <button onclick="pay()">Pay with Stripe</button>
     </div>
 
     <div class="card">
-      <h3>Buy tickets</h3>
-      <p>Tickets cost 25p each. Choose how many you want:</p>
-      <input id="quantity" type="number" min="1" max="200000" value="1" />
-      <button id="checkout">Checkout with Stripe</button>
+      <h2>Your Tickets & Instant Wins</h2>
+      <table id="ticketsTable">
+        <thead><tr><th>Competition</th><th>Ticket #</th><th>Instant Win</th><th>Purchased</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </main>
+  </div>
 
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="/payment.js"></script>
   <script>
-    // Protect page: ensure logged in and not admin
-    (async () => {
+    let competitions = [];
+    const qtyOut = document.getElementById("qtyOut");
+    const quantity = document.getElementById("quantity");
+    const priceInfo = document.getElementById("priceInfo");
+
+    async function init() {
       const me = await fetch("/api/me").then(r=>r.json());
-      if (!me.user) { window.location.href = "/login.html"; return; }
-      if (me.user.role === "admin") { window.location.href = "/admin.html"; return; }
-    })();
+      if (!me.user) location.href = "/login.html";
 
-    document.getElementById("logout").onclick = async () => {
+      competitions = await fetch("/api/competitions").then(r=>r.json());
+      const sel = document.getElementById("competition");
+      sel.innerHTML = competitions.map(c => `<option value="${c.id}" data-price="${c.price}">${c.title} — £${c.price.toFixed(2)} per ticket</option>`).join("");
+      updatePrice();
+
+      loadTickets();
+    }
+
+    function updatePrice() {
+      const sel = document.getElementById("competition");
+      const opt = sel.options[sel.selectedIndex];
+      const price = parseFloat(opt.dataset.price);
+      const qty = parseInt(quantity.value,10);
+      priceInfo.textContent = `Total: £${(price * qty).toFixed(2)} ( ${qty} × £${price.toFixed(2)} )`;
+    }
+    quantity.addEventListener("input", updatePrice);
+    document.getElementById("competition").addEventListener("change", updatePrice);
+
+    async function loadTickets() {
+      const data = await fetch("/api/me/tickets").then(r=>r.json());
+      const tbody = document.querySelector("#ticketsTable tbody");
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td>${r.competition_title}</td>
+          <td>${r.ticket_number}</td>
+          <td>${r.instant_win ? "✅" : "—"}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function logout() {
       await fetch("/api/logout", { method:"POST" });
-      window.location.href = "/";
-    };
+      location.href = "/";
+    }
 
-    let stripe;
-    (async () => {
-      const cfg = await fetch("/api/config").then(r=>r.json());
-      stripe = Stripe(cfg.publishableKey);
-      window.BASE_URL = cfg.baseUrl || "";
-    })();
+    async function pay() {
+      const compId = document.getElementById("competition").value;
+      const qty = parseInt(document.getElementById("quantity").value,10);
+      startCheckout(compId, qty); // from payment.js
+    }
 
-    document.getElementById("checkout").addEventListener("click", async () => {
-      const quantity = parseInt(document.getElementById("quantity").value, 10) || 1;
-      const res = await fetch("/api/create-checkout-session", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ quantity })
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.error || "Could not start checkout");
-      await stripe.redirectToCheckout({ sessionId: data.id });
-    });
+    init();
   </script>
 </body>
 </html>
