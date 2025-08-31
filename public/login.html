@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Login</title></head>
+<body>
+  <h2>Login</h2>
+  <input id="email" placeholder="Email"><br>
+  <input id="password" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <p><a href="/signup.html">Create an account</a></p>
+<script>
+async function login(){
+  const r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    email:document.getElementById('email').value, password:document.getElementById('password').value
+  })});
+  if(r.ok) location.href='/dashboard.html'; else alert('Login failed');
+}
+</script>
+</body>
+</html>
