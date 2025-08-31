@@ -373,7 +373,13 @@ app.get("/admin", (req, res) => {
 app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
-
+// Serve competitions page with Stripe key injected
+const fs = require("fs");
+app.get("/competitions.html", (req, res) => {
+  let html = fs.readFileSync("./public/competitions.html", "utf8");
+  html = html.replace("{{STRIPE_PUBLISHABLE_KEY}}", process.env.STRIPE_PUBLISHABLE_KEY);
+  res.send(html);
+});
 // ---- START ----
 app.listen(PORT, () => {
   console.log(`🎣 TackleTarts running on port ${PORT}`);
