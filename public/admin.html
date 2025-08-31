@@ -1,39 +1,46 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Admin</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin • TackleTarts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#062d61; color:#fff; min-height:100vh; }
+    header { padding:16px; display:flex; justify-content:space-between; align-items:center; background:#0b3c84; }
+    main { max-width:900px; margin: 24px auto; padding: 0 16px; }
+    .card { background:#0b3c84; border-radius:12px; padding:16px; margin-bottom:16px; }
+    button { padding:10px 14px; border:none; border-radius:8px; background:#fff; color:#0a4aa3; font-weight:700; }
+    a { color:#fff; }
+  </style>
+</head>
 <body>
-  <h2>Admin</h2>
-  <p>Log in with the admin account you seeded via environment variables.</p>
+  <header>
+    <strong>🎣 Admin Panel</strong>
+    <nav>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
 
-  <h3>Create Competition</h3>
-  <input id="title" placeholder="Title"><br>
-  <input id="desc" placeholder="Description"><br>
-  <input id="img" placeholder="Image URL (optional)"><br>
-  <label>Total tickets:</label> <input id="total" type="number" value="200000"><br>
-  <label>Price (pence):</label> <input id="price" type="number" value="25"><br>
-  <label>Instant win count:</label> <input id="wins" type="number" value="100"><br>
-  <button onclick="createComp()">Create</button>
+  <main>
+    <h2>Welcome, Admin</h2>
+    <div class="card">
+      <p>This is a minimal admin page for now. You’re logged in as an admin and will not see the user dashboard.</p>
+      <p>(Later we can add: manage competitions, close competitions, edit tickets, grant credits.)</p>
+    </div>
+  </main>
 
-  <h3>Close Competition</h3>
-  <input id="closeId" type="number" placeholder="Competition ID">
-  <button onclick="closeComp()">Close</button>
+  <script>
+    (async () => {
+      const me = await fetch("/api/me").then(r=>r.json());
+      if (!me.user || me.user.role !== "admin") {
+        window.location.href = "/login.html";
+      }
+    })();
 
-<script>
-async function createComp(){
-  const body = {
-    title:val('title'), description:val('desc'), image_url:val('img'),
-    total_tickets:int('total'), price_pence:int('price'), instant_win_count:int('wins')
-  };
-  const r = await fetch('/api/admin/competitions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(r.ok) alert('Created'); else alert('Failed (are you logged in as admin?)');
-}
-async function closeComp(){
-  const id = document.getElementById('closeId').value;
-  const r = await fetch('/api/admin/competitions/'+id+'/close',{method:'POST'});
-  if(r.ok) alert('Closed'); else alert('Failed');
-}
-function val(id){return document.getElementById(id).value}
-function int(id){return parseInt(val(id),10)}
-</script>
+    document.getElementById("logout").onclick = async () => {
+      await fetch("/api/logout", { method:"POST" });
+      window.location.href = "/";
+    };
+  </script>
 </body>
 </html>
