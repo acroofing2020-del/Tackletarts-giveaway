@@ -1,69 +1,80 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>My Home</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Dashboard • TackleTarts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#0a4aa3; color:#fff; min-height:100vh; }
+    header { padding:16px; display:flex; justify-content:space-between; align-items:center; background:#0b3c84; }
+    main { max-width:900px; margin: 24px auto; padding: 0 16px; }
+    .card { background:#0b3c84; border-radius:12px; padding:16px; margin-bottom:16px; }
+    input[type=number] { width:120px; padding:10px; border-radius:8px; border:none; }
+    button { padding:12px 16px; border:none; border-radius:10px; background:#fff; color:#0a4aa3; font-weight:700; }
+    a { color:#fff; }
+  </style>
+</head>
 <body>
-  <h1>My Dashboard</h1>
+  <header>
+    <strong>🎣 TackleTarts</strong>
+    <nav>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
 
-  <ul>
-    <li><strong>Instant Wins</strong> — how many you’ve hit so far.</li>
-    <li><strong>Account Info</strong> — name & address on file.</li>
-    <li><strong>Email Info</strong> — your login email.</li>
-    <li><strong>Competition History</strong> — your orders.</li>
-    <li><strong>Instant Wins & Ticket Numbers</strong> — full list of tickets.</li>
-  </ul>
+  <main>
+    <h2>Your Dashboard</h2>
+    <div class="card">
+      <h3>Quick links</h3>
+      <ul>
+        <li>Instant wins</li>
+        <li>Account info</li>
+        <li>Email info</li>
+        <li>Competition history</li>
+        <li>Your ticket numbers</li>
+      </ul>
+    </div>
 
-  <div id="summary" style="margin:20px 0;padding:12px;border:1px solid #ccc;">
-    <div><b>Email:</b> <span id="email"></span></div>
-    <div><b>Name:</b> <span id="name"></span></div>
-    <div><b>Address:</b> <span id="address"></span></div>
-    <div><b>Site Credit:</b> £<span id="credit">0.00</span></div>
-    <div><b>Instant Wins:</b> <span id="wins">0</span></div>
-  </div>
+    <div class="card">
+      <h3>Buy tickets</h3>
+      <p>Tickets cost 25p each. Choose how many you want:</p>
+      <input id="quantity" type="number" min="1" max="200000" value="1" />
+      <button id="checkout">Checkout with Stripe</button>
+    </div>
+  </main>
 
-  <h3>Competition History (recent)</h3>
-  <table border="1" cellpadding="6" cellspacing="0">
-    <thead><tr><th>When</th><th>Competition</th><th>Qty</th><th>Amount</th><th>Status</th></tr></thead>
-    <tbody id="orders"></tbody>
-  </table>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>
+    // Protect page: ensure logged in and not admin
+    (async () => {
+      const me = await fetch("/api/me").then(r=>r.json());
+      if (!me.user) { window.location.href = "/login.html"; return; }
+      if (me.user.role === "admin") { window.location.href = "/admin.html"; return; }
+    })();
 
-  <h3 style="margin-top:24px">Tickets (recent)</h3>
-  <table border="1" cellpadding="6" cellspacing="0">
-    <thead><tr><th>When</th><th>Competition</th><th>Ticket #</th><th>Instant Win</th></tr></thead>
-    <tbody id="tickets"></tbody>
-  </table>
+    document.getElementById("logout").onclick = async () => {
+      await fetch("/api/logout", { method:"POST" });
+      window.location.href = "/";
+    };
 
-  <p style="margin-top:20px"><a href="/competitions.html">Buy more tickets →</a> | <a href="/login.html" onclick="logout();return false;">Logout</a></p>
+    let stripe;
+    (async () => {
+      const cfg = await fetch("/api/config").then(r=>r.json());
+      stripe = Stripe(cfg.publishableKey);
+      window.BASE_URL = cfg.baseUrl || "";
+    })();
 
-<script>
-async function load(){
-  const r = await fetch('/api/my-overview');
-  if(!r.ok){ alert('Please login first'); location.href='/login.html'; return; }
-  const data = await r.json();
-  document.getElementById('email').textContent = data.account.email || '';
-  document.getElementById('name').textContent = data.account.name || '';
-  document.getElementById('address').textContent = data.account.address || '';
-  document.getElementById('credit').textContent = (data.account.credit_cents/100).toFixed(2);
-  document.getElementById('wins').textContent = data.instantWins;
-
-  const otb = document.getElementById('orders'); otb.innerHTML='';
-  (data.orders||[]).forEach(o=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${o.created_at||''}</td><td>${o.title||''}</td><td>${o.quantity}</td><td>£${(o.amount_pence/100).toFixed(2)}</td><td>${o.status}</td>`;
-    otb.appendChild(tr);
-  });
-
-  const ttb = document.getElementById('tickets'); ttb.innerHTML='';
-  (data.tickets||[]).forEach(t=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${t.created_at||''}</td><td>${t.title||''}</td><td>${t.ticket_number}</td><td>${t.is_instant_win? '✅':'—'}</td>`;
-    ttb.appendChild(tr);
-  });
-}
-async function logout(){
-  await fetch('/api/logout',{method:'POST'});
-  location.href='/login.html';
-}
-load();
-</script>
+    document.getElementById("checkout").addEventListener("click", async () => {
+      const quantity = parseInt(document.getElementById("quantity").value, 10) || 1;
+      const res = await fetch("/api/create-checkout-session", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ quantity })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Could not start checkout");
+      await stripe.redirectToCheckout({ sessionId: data.id });
+    });
+  </script>
 </body>
 </html>
