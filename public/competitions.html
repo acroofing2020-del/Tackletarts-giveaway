@@ -2,94 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TackleTarts Competitions (v3)</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f0f8ff; padding:20px; }
-    .card { background:#fff; border:1px solid #cfe0ff; border-radius:10px; padding:20px; max-width:520px; margin:20px auto; box-shadow:0 2px 8px rgba(0,0,0,0.06);}
-    button { background:#0044cc; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; }
-    button:hover { background:#0033a3; }
-    input[type=number]{ width:90px; padding:6px; margin-left:6px; }
-    #log { white-space:pre-wrap; background:#eef4ff; border:1px dashed #8fb2ff; padding:10px; margin-top:16px; border-radius:8px; }
-  </style>
+  <title>Competitions</title>
 </head>
 <body>
-  <h1>🎣 TackleTarts Competitions (v3)</h1>
-  <div id="me" class="card">Checking login...</div>
-  <div id="competitions" class="card">Loading competitions…</div>
-  <div id="log" class="card">Log:\n</div>
+  <h1>Available Competitions</h1>
+  <div id="competitions"></div>
 
   <script>
-    function log(msg){ 
-      const box = document.getElementById("log"); 
-      box.textContent += (typeof msg === 'string' ? msg : JSON.stringify(msg)) + "\n"; 
-      console.log(msg);
-    }
+    async function loadCompetitions() {
+      const res = await fetch("/api/competitions");
+      const comps = await res.json();
+      const container = document.getElementById("competitions");
+      container.innerHTML = "";
 
-    async function whoAmI(){
-      try{
-        const r = await fetch("/api/me");
-        const data = await r.json();
-        if(data.user){
-          document.getElementById("me").textContent = `Logged in as ${data.user.email} (role: ${data.user.role})`;
-        } else {
-          document.getElementById("me").innerHTML = `Not logged in. <a href="/login.html">Login</a> or <a href="/signup.html">Sign up</a>`;
-        }
-      }catch(e){ log(e); }
-    }
-
-    async function loadCompetitions(){
-      try{
-        const r = await fetch("/api/competitions");
-        const comps = await r.json();
-        log({comps});
-        const c = document.getElementById("competitions");
-        c.innerHTML = "";
-        if(!Array.isArray(comps) || comps.length===0){
-          c.textContent = "No open competitions (the server should auto-seed one named 'Daily Draw (seeded)')";
-          return;
-        }
-        const comp = comps[0];
-        c.innerHTML = `
-          <h2>${comp.title}</h2>
-          <p>Price: £${Number(comp.price).toFixed(2)} | Max Tickets: ${comp.max_tickets}</p>
-          <label>Tickets:
-            <input type="number" id="qty-${comp.id}" value="1" min="1" max="${comp.max_tickets}">
-          </label>
-          <div style="margin-top:12px">
-            <button id="buy-${comp.id}">Buy Tickets</button>
-          </div>
+      comps.forEach(comp => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <h3>${comp.title}</h3>
+          <p>£${comp.price} per ticket</p>
+          <input type="number" id="qty-${comp.id}" min="1" max="100" value="1"/>
+          <button onclick="buyTickets(${comp.id})">Buy Tickets</button>
         `;
-        document.getElementById(`buy-${comp.id}`).addEventListener("click", () => buyTickets(comp.id));
-        log("Button wired: #" + `buy-${comp.id}`);
-      }catch(e){ log(e); }
+        container.appendChild(div);
+      });
     }
 
-    async function buyTickets(compId){
-      const qtyEl = document.getElementById(`qty-${compId}`);
-      const qty = parseInt(qtyEl.value || "1", 10);
-      log({action:"buy", compId, qty});
-
-      try{
-        const r = await fetch("/api/checkout", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ competition_id: compId, quantity: qty })
-        });
-        const data = await r.json();
-        log({checkoutResponse:data});
-        if (data.url){
-          window.location = data.url; // Stripe Checkout
-        } else {
-          alert("Checkout failed: " + (data.error || "Unknown error"));
-        }
-      }catch(e){
-        log(e);
-        alert("Something went wrong. See log.");
+    async function buyTickets(compId) {
+      const qty = document.getElementById("qty-" + compId).value;
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ competition_id: compId, quantity: parseInt(qty) })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location = data.url;
+      } else {
+        alert("Error: " + (data.error || "Checkout failed"));
       }
     }
 
-    whoAmI();
     loadCompetitions();
   </script>
 </body>
