@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>My Home</title></head>
+<body>
+  <h1>My Dashboard</h1>
+
+  <ul>
+    <li><strong>Instant Wins</strong> — how many you’ve hit so far.</li>
+    <li><strong>Account Info</strong> — name & address on file.</li>
+    <li><strong>Email Info</strong> — your login email.</li>
+    <li><strong>Competition History</strong> — your orders.</li>
+    <li><strong>Instant Wins & Ticket Numbers</strong> — full list of tickets.</li>
+  </ul>
+
+  <div id="summary" style="margin:20px 0;padding:12px;border:1px solid #ccc;">
+    <div><b>Email:</b> <span id="email"></span></div>
+    <div><b>Name:</b> <span id="name"></span></div>
+    <div><b>Address:</b> <span id="address"></span></div>
+    <div><b>Site Credit:</b> £<span id="credit">0.00</span></div>
+    <div><b>Instant Wins:</b> <span id="wins">0</span></div>
+  </div>
+
+  <h3>Competition History (recent)</h3>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead><tr><th>When</th><th>Competition</th><th>Qty</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody id="orders"></tbody>
+  </table>
+
+  <h3 style="margin-top:24px">Tickets (recent)</h3>
+  <table border="1" cellpadding="6" cellspacing="0">
+    <thead><tr><th>When</th><th>Competition</th><th>Ticket #</th><th>Instant Win</th></tr></thead>
+    <tbody id="tickets"></tbody>
+  </table>
+
+  <p style="margin-top:20px"><a href="/competitions.html">Buy more tickets →</a> | <a href="/login.html" onclick="logout();return false;">Logout</a></p>
+
+<script>
+async function load(){
+  const r = await fetch('/api/my-overview');
+  if(!r.ok){ alert('Please login first'); location.href='/login.html'; return; }
+  const data = await r.json();
+  document.getElementById('email').textContent = data.account.email || '';
+  document.getElementById('name').textContent = data.account.name || '';
+  document.getElementById('address').textContent = data.account.address || '';
+  document.getElementById('credit').textContent = (data.account.credit_cents/100).toFixed(2);
+  document.getElementById('wins').textContent = data.instantWins;
+
+  const otb = document.getElementById('orders'); otb.innerHTML='';
+  (data.orders||[]).forEach(o=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${o.created_at||''}</td><td>${o.title||''}</td><td>${o.quantity}</td><td>£${(o.amount_pence/100).toFixed(2)}</td><td>${o.status}</td>`;
+    otb.appendChild(tr);
+  });
+
+  const ttb = document.getElementById('tickets'); ttb.innerHTML='';
+  (data.tickets||[]).forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${t.created_at||''}</td><td>${t.title||''}</td><td>${t.ticket_number}</td><td>${t.is_instant_win? '✅':'—'}</td>`;
+    ttb.appendChild(tr);
+  });
+}
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  location.href='/login.html';
+}
+load();
+</script>
+</body>
+</html>
