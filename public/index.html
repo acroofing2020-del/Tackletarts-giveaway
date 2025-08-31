@@ -5,59 +5,60 @@
   <title>TackleTarts Giveaways</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { --blue:#0a4aa3; --btn:#0f66ff; }
-    * { box-sizing: border-box; }
+    :root { --blue:#0a4ea1; --light:#e6f0ff; }
     body {
-      margin: 0; font-family: Arial, sans-serif; color: #fff;
-      min-height: 100vh; display: grid; place-items: center;
-      background: linear-gradient(180deg, rgba(10,74,163,0.9), rgba(10,74,163,0.75)), url("/images/carp-bg.jpg") center/cover no-repeat fixed;
+      margin:0; font-family: Arial, sans-serif; color:#fff;
+      background: linear-gradient(135deg, #1c5fd4 0%, #0a4ea1 60%, #07367a 100%);
+      min-height:100vh; position:relative; overflow:hidden;
     }
-    .wrap { width: 100%; max-width: 520px; padding: 24px; text-align: center; }
-    h1 { margin: 0 0 8px; letter-spacing: 0.5px; }
-    p { opacity: 0.9; margin: 0 0 24px; }
-    .card {
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 16px; padding: 24px; backdrop-filter: blur(6px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    .bg {
+      position:absolute; inset:0;
+      background:
+        url('https://images.unsplash.com/photo-1544551763-7ef42039fa4c?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+      opacity:0.15;
+      filter: saturate(120%);
     }
-    .links { display: grid; gap: 12px; margin-top: 16px; }
-    .btn {
-      display: block; width: 100%; padding: 14px 16px; border-radius: 12px;
-      background: #fff; color: #0a4aa3; text-decoration: none; font-weight: 700;
-      border: 2px solid transparent;
+    header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:18px 24px; background:rgba(0,0,0,0.25); backdrop-filter: blur(6px);
     }
-    .btn:hover { border-color: #fff; background: transparent; color: #fff; }
-    .small { font-size: 12px; opacity: 0.8; margin-top: 18px; }
-    .brand {
-      display:flex; gap:12px; align-items:center; justify-content:center; margin-bottom: 12px;
+    .brand { font-weight:800; letter-spacing:.5px; }
+    nav a {
+      color:#fff; text-decoration:none; margin-left:16px; padding:10px 14px; border:1px solid #fff3; border-radius:10px;
     }
-    .rod {
-      width: 24px; height: 24px; border:2px solid #fff; border-radius: 2px; transform: rotate(20deg);
-      position: relative;
+    .hero {
+      display:grid; place-items:center; text-align:center; padding:80px 20px;
     }
-    .rod::after {
-      content:""; position:absolute; right:-10px; top:6px; width:14px; height:14px; border:2px solid #fff; border-radius:50%;
+    .title { font-size:44px; margin:0 0 10px; text-shadow:0 6px 24px rgba(0,0,0,.4); }
+    .subtitle { font-size:18px; color:#e8f2ff; max-width:720px }
+    .rods {
+      position:absolute; top:0; bottom:0; left:0; right:0; pointer-events:none;
+      background:
+        url('https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/fishing.svg') left 20% center / 160px no-repeat,
+        url('https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/fishing.svg') right 20% center / 160px no-repeat;
+      opacity:.08;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="brand">
-      <div class="rod"></div>
-      <h1>TackleTarts Giveaways</h1>
-      <div class="rod" style="transform:rotate(-20deg)"></div>
-    </div>
-    <p>Daily draws • Random ticket numbers • Instant wins</p>
+  <div class="bg"></div>
+  <div class="rods"></div>
+  <header>
+    <div class="brand">🎣 TackleTarts Giveaways</div>
+    <nav>
+      <a href="/login.html">Login</a>
+      <a href="/signup.html">Sign Up</a>
+    </nav>
+  </header>
 
-    <div class="card">
-      <div class="links">
-        <a class="btn" href="/login.html">Login</a>
-        <a class="btn" href="/signup.html">Create an Account</a>
-        <a class="btn" href="/competitions.html">View Competitions</a>
-        <a class="btn" href="https://instagram.com/" target="_blank" rel="noopener">Instagram</a>
-      </div>
-      <div class="small">© TackleTarts • Keep it fun, play responsibly</div>
+  <section class="hero">
+    <div>
+      <h1 class="title">Daily Fishing Gear Raffles</h1>
+      <p class="subtitle">
+        Up to 200,000 tickets per draw · Randomized ticket numbers · Instant wins pre-seeded.
+        Sign up, pick your quantity, pay securely with Stripe, and reel in the prizes.
+      </p>
     </div>
-  </div>
+  </section>
 </body>
 </html>
