@@ -134,3 +134,22 @@ app.post("/api/checkout", ensureAuth, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🎣 TackleTarts running on port ${PORT}`);
 });
+// create-admin.js
+const sqlite3 = require("sqlite3").verbose();
+const bcrypt = require("bcryptjs");
+
+const db = new sqlite3.Database("./tackletarts.db");
+
+const email = "admin@tackletarts.com"; // change if you want
+const password = "Admin123"; // change if you want
+const hashed = bcrypt.hashSync(password, 10);
+
+db.run(
+  "INSERT INTO users (email, password, role, address) VALUES (?, ?, ?, ?)",
+  [email, hashed, "admin", "Admin HQ"],
+  (err) => {
+    if (err) console.error(err.message);
+    else console.log("✅ Admin user created!");
+    db.close();
+  }
+);
